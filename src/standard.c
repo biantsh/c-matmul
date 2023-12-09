@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-void mat_mul(int size, int* matrix_1[size], int* matrix_2[size], int* result[size]) {
+void mat_mul(int size, int** matrix_1, int** matrix_2, int** result) {
     for (int row = 0; row < size; row++) {
         for (int col = 0; col < size; col++) {
             result[row][col] = 0;
@@ -39,5 +39,5 @@ int main(int argc, char* argv[]) {
 
     double time_taken = (double) (time_end - time_start) / CLOCKS_PER_SEC;
     printf("Time taken: %.3f seconds\n", time_taken);
-    printf("Matrix size: %d", size);
+    printf("Matrix size: %ld", size);
 }
