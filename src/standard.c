@@ -1,3 +1,5 @@
+// Standard matrix multiplication on a single core.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
