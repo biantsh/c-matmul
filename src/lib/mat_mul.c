@@ -10,7 +10,7 @@ typedef struct {
     int row_end;
 } ThreadArgs;
 
-void* mat_mul_threaded(void* thread_args) {
+void mat_mul_threaded(void* thread_args) {
     ThreadArgs* args = (ThreadArgs*) thread_args;
 
     for (int row = args->row_start; row < args->row_end; row++) {
@@ -21,9 +21,6 @@ void* mat_mul_threaded(void* thread_args) {
             }
         }
     }
-
-    pthread_exit(NULL);
-    return NULL;
 }
 
 void mat_mul_standard(int** matrix_1, int** matrix_2, int** result, int size, int num_threads) {
@@ -44,7 +41,8 @@ void mat_mul_standard(int** matrix_1, int** matrix_2, int** result, int size, in
             thread_args[thread_idx].row_end = size;
         }
 
-        pthread_create(&threads[thread_idx], NULL, mat_mul_threaded, (void*)&thread_args[thread_idx]);
+        pthread_create(&threads[thread_idx], NULL,
+                       (void*) *mat_mul_threaded, (void*) &thread_args[thread_idx]);
     }
 
     for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
