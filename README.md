@@ -9,17 +9,17 @@ files named `standard` and `strassen`.
 **Example usage:**
 
 ```bash
-# ./standard {matrix-size}
-./standard 512
+# ./standard {matrix-size} {num-threads}
+./standard 2048 2
 
-> Time taken: 0.260 seconds
-> Matrix size: 512
+> Time taken: 15.335 seconds
+> Matrix size: 2048
 
-# ./strassen {matrix-size} {leaf-size}
-./strassen 512 32
+# ./strassen {matrix-size} {num-threads} {leaf-size}
+./strassen 2048 2 32
 
-> Time taken: 0.195 seconds
-> Matrix size: 512
+> Time taken: 12.544 seconds
+> Matrix size: 2048
 ```
 
 *Note:* The matrices are filled automatically with random integers between 0 and 9. This is simply meant as a demo to

@@ -9,6 +9,7 @@
 
 int main(int argc, char* argv[]) {
     long size = strtol(argv[1], NULL, 10);
+    long num_threads = strtol(argv[2], NULL, 10);
 
     int** matrix_1 = mat_alloc(size);
     int** matrix_2 = mat_alloc(size);
@@ -19,7 +20,7 @@ int main(int argc, char* argv[]) {
     mat_fill(result, size);
 
     clock_t time_start = clock();
-    mat_mul_standard(matrix_1, matrix_2, result, size);
+    mat_mul_standard(matrix_1, matrix_2, result, size, num_threads);
     clock_t time_end = clock();
 
     double time_taken = (double) (time_end - time_start) / CLOCKS_PER_SEC;

@@ -1,19 +1,60 @@
+#include <pthread.h>
 #include "mat_util.h"
 
-void mat_mul_standard(int** matrix_1, int** matrix_2, int** result, int size) {
-    for (int row = 0; row < size; row++) {
-        for (int col = 0; col < size; col++) {
-            result[row][col] = 0;
-            for (int index = 0; index < size; index++) {
-                result[row][col] += matrix_1[row][index] * matrix_2[index][col];
+typedef struct {
+    int** matrix_1;
+    int** matrix_2;
+    int** result;
+    int size;
+    int row_start;
+    int row_end;
+} ThreadArgs;
+
+void* mat_mul_threaded(void* thread_args) {
+    ThreadArgs* args = (ThreadArgs*) thread_args;
+
+    for (int row = args->row_start; row < args->row_end; row++) {
+        for (int col = 0; col < args->size; col++) {
+            args->result[row][col] = 0;
+            for (int index = 0; index < args->size; index++) {
+                args->result[row][col] += args->matrix_1[row][index] * args->matrix_2[index][col];
             }
         }
     }
+
+    pthread_exit(NULL);
+    return NULL;
 }
 
-void mat_mul_strassen(int** matrix_1, int** matrix_2, int** result, int size, int leaf_size) {
+void mat_mul_standard(int** matrix_1, int** matrix_2, int** result, int size, int num_threads) {
+    pthread_t threads[num_threads];
+    ThreadArgs thread_args[num_threads];
+
+    int rows_per_thread = size / num_threads;
+    for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
+        thread_args[thread_idx].matrix_1 = matrix_1;
+        thread_args[thread_idx].matrix_2 = matrix_2;
+        thread_args[thread_idx].result = result;
+        thread_args[thread_idx].size = size;
+        thread_args[thread_idx].row_start = thread_idx * rows_per_thread;
+        thread_args[thread_idx].row_end = (thread_idx + 1) * rows_per_thread;
+
+        // Ensure last thread covers remaining rows
+        if (thread_idx == num_threads - 1) {
+            thread_args[thread_idx].row_end = size;
+        }
+
+        pthread_create(&threads[thread_idx], NULL, mat_mul_threaded, (void*)&thread_args[thread_idx]);
+    }
+
+    for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
+        pthread_join(threads[thread_idx], NULL);
+    }
+}
+
+void mat_mul_strassen(int** matrix_1, int** matrix_2, int** result, int size, int num_threads, int leaf_size) {
     if (size <= leaf_size) {
-        mat_mul_standard(matrix_1, matrix_1, result, size);
+        mat_mul_standard(matrix_1, matrix_1, result, size, num_threads);
         return;
     }
 
@@ -60,34 +101,34 @@ void mat_mul_strassen(int** matrix_1, int** matrix_2, int** result, int size, in
 
     // p1 = a11 * (b12 - b22)
     mat_sub(b12, b22, temp_b, new_size);
-    mat_mul_strassen(a11, temp_b, p1, new_size, leaf_size);
+    mat_mul_strassen(a11, temp_b, p1, new_size, num_threads, leaf_size);
 
     // p2 = (a11 + a12) * b22
     mat_add(a11, a12, temp_a, new_size);
-    mat_mul_strassen(temp_a, b22, p2, new_size, leaf_size);
+    mat_mul_strassen(temp_a, b22, p2, new_size, num_threads, leaf_size);
 
     // p3 = (a21 + a22) * b11
     mat_add(a21, a22, temp_a, new_size);
-    mat_mul_strassen(temp_a, b11, p3, new_size, leaf_size);
+    mat_mul_strassen(temp_a, b11, p3, new_size, num_threads, leaf_size);
 
     // p4 = a22 * (b21 - b11)
     mat_sub(b21, b11, temp_b, new_size);
-    mat_mul_strassen(a22, temp_b, p4, new_size, leaf_size);
+    mat_mul_strassen(a22, temp_b, p4, new_size, num_threads, leaf_size);
 
     // p5 = (a11 + a22) * (b11 + b22)
     mat_add(a11, a22, temp_a, new_size);
     mat_add(b11, b22, temp_b, new_size);
-    mat_mul_strassen(temp_a, temp_b, p5, new_size, leaf_size);
+    mat_mul_strassen(temp_a, temp_b, p5, new_size, num_threads, leaf_size);
 
     // p6 = (a12 - a22) * (b21 + b22)
     mat_sub(a12, a22, temp_a, new_size);
     mat_add(b21, b22, temp_b, new_size);
-    mat_mul_strassen(temp_a, temp_b, p6, new_size, leaf_size);
+    mat_mul_strassen(temp_a, temp_b, p6, new_size, num_threads, leaf_size);
 
     // p7 = (a11 - a21) * (b11 + b12)
     mat_sub(a11, a21, temp_a, new_size);
     mat_add(b11, b12, temp_b, new_size);
-    mat_mul_strassen(temp_a, temp_b, p7, new_size, leaf_size);
+    mat_mul_strassen(temp_a, temp_b, p7, new_size, num_threads, leaf_size);
 
     // Construct the result matrix
     // c11 = p5 + p4 - p2 + p6

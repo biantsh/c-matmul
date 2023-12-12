@@ -9,7 +9,8 @@
 
 int main(int argc, char* argv[]) {
     long mat_size = strtol(argv[1], NULL, 10);
-    long leaf_size = strtol(argv[2], NULL, 10);
+    long num_threads = strtol(argv[2], NULL, 10);
+    long leaf_size = strtol(argv[3], NULL, 10);
 
     int** matrix_1 = mat_alloc(mat_size);
     int** matrix_2 = mat_alloc(mat_size);
@@ -20,7 +21,7 @@ int main(int argc, char* argv[]) {
     mat_fill(result, mat_size);
 
     clock_t time_start = clock();
-    mat_mul_strassen(matrix_1, matrix_2, result, mat_size, leaf_size);
+    mat_mul_strassen(matrix_1, matrix_2, result, mat_size, num_threads, leaf_size);
     clock_t time_end = clock();
 
     double time_taken = (double) (time_end - time_start) / CLOCKS_PER_SEC;
